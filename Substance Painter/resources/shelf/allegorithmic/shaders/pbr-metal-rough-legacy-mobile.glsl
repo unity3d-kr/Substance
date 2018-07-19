@@ -1,5 +1,5 @@
-//- Allegorithmic Metal/Rough and opacity PBR shader
-//- ================================================
+//- Allegorithmic Metal/Rough PBR shader
+//- ====================================
 //-
 //- Import from libraries.
 import lib-pbr.glsl
@@ -7,16 +7,10 @@ import lib-pom.glsl
 
 #define PBR_MOBILE 1
 
-// Link Metal/Roughness MDL for Iray
+//- Declare the iray mdl material to use with this shader.
 //: metadata {
 //:   "mdl":"mdl::alg::materials::physically_metallic_roughness::physically_metallic_roughness"
 //: }
-
-//- Show back faces as there may be holes in front faces.
-//: state cull_face off
-
-//- Enable alpha blending
-//: state blend over
 
 //- Channels needed for metal/rough workflow are bound here.
 //: param auto channel_basecolor
@@ -27,8 +21,6 @@ uniform sampler2D roughness_tex;
 uniform sampler2D metallic_tex;
 //: param auto channel_specularlevel
 uniform sampler2D specularlevel_tex;
-//: param auto channel_opacity
-uniform sampler2D opacity_tex;
 
 
 #if PBR_MOBILE
@@ -49,7 +41,6 @@ vec3 EnvBRDFApprox(vec3 SpecularColor, float Roughness, float NoV)
 
 	return SpecularColor * AB.x + AB.y;
 }
-
 float PhongApprox(float Roughness, float RoL)
 {
 	float a = Roughness * Roughness;			// 1 mul
@@ -68,20 +59,9 @@ float PhongApprox(float Roughness, float RoL)
 	return min(p, rcp_a2);						// Avoid overflow/underflow on Mali GPUs
 }
 
-float GGX_Mobile(float Roughness, float NoH, vec3 H, vec3 N)
+float probabilityPhongApprox(float ndh, float vdh, float rol, float Roughness)
 {
-    float OneMinusNoHSqr = 1.0 - NoH * NoH;
-
-	float a = Roughness * Roughness;
-	float n = NoH * a;
-	float p = a / (OneMinusNoHSqr + n * n);
-	float d = p * p;
-	return d;
-}
-
-float probabilityGGXMobile(float ndh, vec3 h, vec3 n, float Roughness)
-{
-	return (Roughness*0.25 + 0.25) * GGX_Mobile(Roughness, ndh, h, n);
+	return PhongApprox(Roughness, rol) * ndh / (4.0*vdh);
 }
 #endif
 
@@ -110,8 +90,8 @@ vec3 pbrComputeSpecularMobile(LocalVectors vectors, vec3 specColor, float glossi
     float ndh = max(1e-8, dot(vectors.normal, Hn));
 #if PBR_MOBILE
 	vec3 rfl = normalize(reflect(-vectors.eye, vectors.normal));
-	float rdl = max(0, dot(rfl, Ln));
-    float lodS = roughness < 0.01 ? 0.0 : computeLOD(Ln, probabilityGGXMobile(ndh, Hn, vectors.normal, roughness));
+	float rdl = max(1e-8, dot(rfl, Ln));
+    float lodS = roughness < 0.01 ? 0.0 : computeLOD(Ln, probabilityPhongApprox(ndh, vdh, rdl, roughness));
     radiance += fade * envSampleLOD(Ln, lodS) * specColor;
 #else
     float lodS = roughness < 0.01 ? 0.0 : computeLOD(Ln, probabilityGGX(ndh, vdh, roughness));
@@ -164,9 +144,7 @@ vec4 shade(V2F inputs)
 	float occlusion = getAO(inputs.tex_coord) * getShadowFactor();
 
 	// Feed parameters for a physically based BRDF integration
-	return vec4(
-		pbrComputeBRDFMobile(inputs, diffColor, specColor, glossiness, occlusion).rgb,
-		getOpacity(opacity_tex, inputs.tex_coord));
+	return pbrComputeBRDFMobile(inputs, diffColor, specColor, glossiness, occlusion);
 }
 
 //- Entry point of the shadow pass.

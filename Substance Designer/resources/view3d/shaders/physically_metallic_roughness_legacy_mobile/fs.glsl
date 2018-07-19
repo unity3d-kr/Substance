@@ -87,7 +87,6 @@ vec3 EnvBRDFApprox(vec3 SpecularColor, float Roughness, float NoV)
 
 	return SpecularColor * AB.x + AB.y;
 }
-
 float PhongApprox(float Roughness, float RoL)
 {
 	float a = Roughness * Roughness;			// 1 mul
@@ -106,20 +105,9 @@ float PhongApprox(float Roughness, float RoL)
 	return min(p, rcp_a2);						// Avoid overflow/underflow on Mali GPUs
 }
 
-float GGX_Mobile(float Roughness, float NoH, vec3 H, vec3 N)
+float probabilityPhongApprox(float ndh, float vdh, float rol, float Roughness)
 {
-    float OneMinusNoHSqr = 1.0 - NoH * NoH;
-
-	float a = Roughness * Roughness;
-	float n = NoH * a;
-	float p = a / (OneMinusNoHSqr + n * n);
-	float d = p * p;
-	return d;
-}
-
-float probabilityGGXMobile(float ndh, vec3 h, vec3 n, float Roughness)
-{
-	return (Roughness*0.25 + 0.25) * GGX_Mobile(Roughness, ndh, h, n);
+	return PhongApprox(Roughness, rol) * ndh / (4.0*vdh);
 }
 #endif
 
@@ -217,7 +205,7 @@ vec3 IBLSpecularContributionMobile(
 		float lodS = roughness < 0.01 ? 0.0 :
 			computeLOD(
 				Ln,
-				probabilityGGXMobile(ndh, Hn, roughness),
+				probabilityPhongApprox(ndh, vdh, rol, roughness),
 				nbSamples,
 				maxLod);
 #else

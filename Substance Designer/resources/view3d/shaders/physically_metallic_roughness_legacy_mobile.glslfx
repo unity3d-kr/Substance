@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sbsbatchnode SYSTEM "glslfx.dtd">
+<glslfx version="1.0.0" author="allegorithmic.com">
+
+    <!-- TECHNIQUES -->
+    <technique name="Parallax Occlusion">
+        <!-- PROPERTIES -->
+        <property name="blend_enabled"     value="true"/>
+        <property name="blend_func"        value="src_alpha,one_minus_src_alpha"/>
+        <property name="cull_face_enabled" value="true"/>
+        <property name="cull_face_mode"    value="back"/>
+
+        <!-- SHADERS -->
+        <shader type="vertex"   filename="common/parallax/vs.glsl"/>
+        <shader type="fragment" filename="physically_metallic_roughness_mobile/fs.glsl"/>
+
+        <!-- UNIFORMS -->
+        <uniform name="parallax_mode" guiName="Parallax Mode"         min="0" max="0" />
+    </technique>
+
+
+    <technique name="Tesselation">
+        <!-- PROPERTIES -->
+        <property name="blend_enabled"     value="true"/>
+        <property name="blend_func"        value="src_alpha,one_minus_src_alpha"/>
+        <property name="cull_face_enabled" value="true"/>
+        <property name="cull_face_mode"    value="back"/>
+
+        <!-- SHADERS -->
+        <shader type="vertex"       filename="common/tessellation/vs.glsl" primitiveType="patch3"/>
+        <shader type="tess_control" filename="common/tessellation/tcs.glsl"/>
+        <shader type="tess_eval"    filename="common/tessellation/tes.glsl"/>
+        <shader type="fragment"     filename="physically_metallic_roughness_mobile/fs.glsl"/>
+
+        <!-- UNIFORMS -->
+        <uniform name="parallax_mode"      guiName="Parallax Mode" min="1" max="1" />
+        <uniform name="tessellationFactor" guiGroup="Height"       guiName="Tessellation Factor"   default="4" min="1" max="64" guiStep="1" guiWidget="slider"/>
+    </technique>
+
+
+    <!-- INPUT VERTEX FORMAT -->
+    <vertexformat name="iVS_Position" semantic="position"/>
+    <vertexformat name="iVS_Normal"   semantic="normal"/>
+    <vertexformat name="iVS_UV"       semantic="texcoord0"/>
+    <vertexformat name="iVS_Tangent"  semantic="tangent0"/>
+    <vertexformat name="iVS_Binormal" semantic="binormal0"/>
+
+    <!-- SAMPLERS -->
+    <sampler name="baseColorMap"    usage="basecolor,diffuse"/>
+    <sampler name="heightMap"       usage="height"/>
+    <sampler name="normalMap"       usage="normal"/>
+    <sampler name="metallicMap"     usage="metallic"/>
+    <sampler name="roughnessMap"    usage="roughness"/>
+    <sampler name="aoMap"           usage="ambientocclusion"/>
+    <sampler name="emissiveMap"     usage="emissive"/>
+    <sampler name="specularLevel"   usage="specularlevel"/>
+    <sampler name="opacityMap"      usage="opacity"/>
+    <sampler name="environmentMap"  usage="panorama"/>
+
+    <!-- MATRICES -->
+    <uniform name="worldMatrix"                 semantic="world"/>
+    <uniform name="worldViewProjMatrix"         semantic="worldviewprojection"/>
+    <uniform name="worldViewMatrix"             semantic="worldview"/>
+    <uniform name="worldInverseTransposeMatrix" semantic="worldinversetranspose"/>
+    <uniform name="viewInverseMatrix"           semantic="viewinverse"/>
+    <uniform name="modelViewMatrix"             semantic="modelview"/>
+    <uniform name="projectionMatrix"            semantic="projection"/>
+
+    <!-- SCENE PARAMETERS -->
+    <uniform name="Lamp0Pos"       semantic="lightposition0"/>
+    <uniform name="Lamp0Color"     semantic="lightcolor0"/>
+    <uniform name="Lamp0Intensity" semantic="lightintensity0"/>
+    <uniform name="Lamp1Pos"       semantic="lightposition1"/>
+    <uniform name="Lamp1Color"     semantic="lightcolor1"/>
+    <uniform name="Lamp1Intensity" semantic="lightintensity1"/>
+
+    <!-- MISC PARAMETERS -->
+    <uniform name="nbSamples"           semantic="samplespostablesize"/>
+    <uniform name="maxLod"              semantic="panoramamipmapheight"/>
+    <uniform name="AmbiIntensity"       semantic="panoramaintensity"/>
+    <uniform name="envRotation"         semantic="panoramarotation"/>
+    <uniform name="shCoefs"             semantic="irradianceshcoefs"/>
+    <uniform name="perFragBinormal"     semantic="computebinormalinfragmentshader"/>
+    <uniform name="uvwScale"            semantic="uvwscale"/>
+
+    <!-- UNIFORMS -->
+    <uniform name="EmissiveIntensity" guiGroup="Emissive"   guiName="Emissive Intensity"      default="1" min="0"  guiWidget="slider"  guiMin="0"  guiMax="20"/>
+    <uniform name="sRGBBaseColor"     guiGroup="Base Color" guiName="sRGB Base Color Texture" default="true"       guiWidget="checkbox" />
+    <uniform name="heightMapScale"    guiGroup="Height"     guiName="Scale"                   default="0" min="-1" guiWidget="slider" guiMin="0"  guiMax="1" />
+    <uniform name="flipY"             guiGroup="Normal"     guiName="DirectX Normal"          default="true"       guiWidget="checkbox" semantic="isdirectxnormal"/>
+    <uniform name="tiling"            guiGroup="Global"     guiName="Tiling"                  default="1" min="1"  guiWidget="slider"   guiMax="10"/>
+    <uniform name="uvwScaleEnabled"   guiGroup="Global"     guiName="UV Scale Enabled" default="false"          guiWidget="checkbox" />
+
+</glslfx>
